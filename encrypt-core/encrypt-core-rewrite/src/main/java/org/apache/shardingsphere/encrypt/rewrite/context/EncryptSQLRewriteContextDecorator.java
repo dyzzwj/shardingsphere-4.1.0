@@ -28,6 +28,8 @@ import org.apache.shardingsphere.underlying.rewrite.parameter.rewriter.Parameter
 
 /**
  * SQL rewrite context decorator for encrypt.
+ *  加密sql重写装饰器
+ *
  */
 public final class EncryptSQLRewriteContextDecorator implements SQLRewriteContextDecorator<EncryptRule> {
     

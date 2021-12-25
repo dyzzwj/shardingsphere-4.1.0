@@ -51,25 +51,46 @@ import java.util.Optional;
  * Sharding route decorator.
  */
 public final class ShardingRouteDecorator implements RouteDecorator<ShardingRule> {
-    
+
+
+    /**
+     * 分库分表路由
+     * @param routeContext route context
+     * @param metaData meta data of ShardingSphere
+     * @param shardingRule
+     * @param properties configuration properties
+     * @return
+     */
     @SuppressWarnings("unchecked")
     @Override
     public RouteContext decorate(final RouteContext routeContext, final ShardingSphereMetaData metaData, final ShardingRule shardingRule, final ConfigurationProperties properties) {
         SQLStatementContext sqlStatementContext = routeContext.getSqlStatementContext();
         List<Object> parameters = routeContext.getParameters();
+        /**
+         *  对SQL进行验证，主要用于判断一些不支持的SQL，
+         *  ShardingInsertStatementValidator - 在分片功能中不支持INSERT INTO .... ON DUPLICATE KEY
+         *  ShardingUpdateStatementValidator - 不支持更新sharding key
+         */
         ShardingStatementValidatorFactory.newInstance(
                 sqlStatementContext.getSqlStatement()).ifPresent(validator -> validator.validate(shardingRule, sqlStatementContext.getSqlStatement(), parameters));
+        // 获取SQL的条件信息
         ShardingConditions shardingConditions = getShardingConditions(parameters, sqlStatementContext, metaData.getSchema(), shardingRule);
+
         boolean needMergeShardingValues = isNeedMergeShardingValues(sqlStatementContext, shardingRule);
         if (sqlStatementContext.getSqlStatement() instanceof DMLStatement && needMergeShardingValues) {
+            // 检查所有Sharding值（表、列、值）是不是相同，如果不相同则抛出异常
             checkSubqueryShardingValues(sqlStatementContext, shardingRule, shardingConditions);
+            //剔除重复的sharding条件信息
             mergeShardingConditions(shardingConditions);
         }
+        // 根据sql类型创建分片路由引擎
         ShardingRouteEngine shardingRouteEngine = ShardingRouteEngineFactory.newInstance(shardingRule, metaData, sqlStatementContext, shardingConditions, properties);
+        // 进行路由，生成路由结果
         RouteResult routeResult = shardingRouteEngine.route(shardingRule);
         if (needMergeShardingValues) {
             Preconditions.checkState(1 == routeResult.getRouteUnits().size(), "Must have one sharding with subquery.");
         }
+        //根据生成的RouteResult，创建新的RouteContext进行了返回。
         return new RouteContext(sqlStatementContext, parameters, routeResult);
     }
     

@@ -78,6 +78,7 @@ public final class SQLRewriteContext {
      * Generate SQL tokens.
      */
     public void generateSQLTokens() {
+        //ShardingSQLRewriteContextDecorator.decorate添加生成器到sqlTokenGenerators中
         sqlTokens.addAll(sqlTokenGenerators.generateSQLTokens(sqlStatementContext, parameters, schemaMetaData));
     }
 }

@@ -112,7 +112,14 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
     public ResultSet executeQuery() throws SQLException {
         ResultSet result;
         try {
+            /**
+             * PreparedStatementExecutor的重置，因为一个Statement可以多次执行多个SQL，
+             * 每次执行完SQL，PreparedStatementExecutor会记录真实的Statement，connection，该方法负责关闭statement，清理记录的参数、连接等
+             */
             clearPrevious();
+            /**
+             * prepare引擎的执行(包括sql解析、sql路由、sql改写)和自增key的生成添加
+             */
             prepare();
             initPreparedStatementExecutor();
             MergedResult mergedResult = mergeQuery(preparedStatementExecutor.executeQuery());
@@ -180,7 +187,11 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
     }
     
     private void prepare() {
+        /**
+         * 执行prepare引擎,调用解析引擎、路由引擎、改写引擎进行SQL的解析、路由操作，相当于这些内核引擎的编排执行
+         */
         executionContext = prepareEngine.prepare(sql, getParameters());
+        //添加自增key
         findGeneratedKey().ifPresent(generatedKey -> generatedValues.add(generatedKey.getGeneratedValues().getLast()));
     }
     
@@ -203,13 +214,17 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
     }
     
     private Optional<GeneratedKeyContext> findGeneratedKey() {
+        //generatedKeyContext的生成的自增值是由ShardingRouteDecorator类中getShardingConditions方法中添加的InsertClauseShardingConditionEngine负责生成
         return executionContext.getSqlStatementContext() instanceof InsertStatementContext
                 ? ((InsertStatementContext) executionContext.getSqlStatementContext()).getGeneratedKeyContext() : Optional.empty();
     }
     
     private void initPreparedStatementExecutor() throws SQLException {
+        //初始化
         preparedStatementExecutor.init(executionContext);
+        //设置参数
         setParametersForStatements();
+        //对statement的一些方法进行回放设置
         replayMethodForStatements();
     }
     

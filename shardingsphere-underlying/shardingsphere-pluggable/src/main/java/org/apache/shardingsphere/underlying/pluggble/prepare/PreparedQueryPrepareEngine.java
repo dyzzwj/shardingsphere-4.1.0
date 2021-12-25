@@ -51,6 +51,7 @@ public final class PreparedQueryPrepareEngine extends BasePrepareEngine {
     
     @Override
     protected RouteContext route(final DataNodeRouter dataNodeRouter, final String sql, final List<Object> parameters) {
+        //SimpleQueryPrepareEngine.route传的是false
         return dataNodeRouter.route(sql, parameters, true);
     }
 }

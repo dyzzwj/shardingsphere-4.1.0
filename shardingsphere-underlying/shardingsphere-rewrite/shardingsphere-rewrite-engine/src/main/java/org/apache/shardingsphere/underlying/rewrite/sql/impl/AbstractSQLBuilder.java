@@ -40,11 +40,15 @@ public abstract class AbstractSQLBuilder implements SQLBuilder {
         if (context.getSqlTokens().isEmpty()) {
             return context.getSql();
         }
+        //// 按照Token的起始位置排序
         Collections.sort(context.getSqlTokens());
         StringBuilder result = new StringBuilder();
         result.append(context.getSql().substring(0, context.getSqlTokens().get(0).getStartIndex()));
         for (SQLToken each : context.getSqlTokens()) {
+            //添加Token对应的SQL片段
+            //RouteSQLBuilder.getSQLTokenText
             result.append(getSQLTokenText(each));
+            // 添加Token之间的连接字符
             result.append(getConjunctionText(each));
         }
         return result.toString();

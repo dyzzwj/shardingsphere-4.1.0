@@ -54,6 +54,7 @@ public final class ShardingTokenGenerateBuilder implements SQLTokenGeneratorBuil
     
     @Override
     public Collection<SQLTokenGenerator> getSQLTokenGenerators() {
+        //构造基本的生成器
         Collection<SQLTokenGenerator> result = buildSQLTokenGenerators();
         for (SQLTokenGenerator each : result) {
             if (each instanceof ShardingRuleAware) {
@@ -68,19 +69,19 @@ public final class ShardingTokenGenerateBuilder implements SQLTokenGeneratorBuil
     
     private Collection<SQLTokenGenerator> buildSQLTokenGenerators() {
         Collection<SQLTokenGenerator> result = new LinkedList<>();
-        addSQLTokenGenerator(result, new TableTokenGenerator());
-        addSQLTokenGenerator(result, new DistinctProjectionPrefixTokenGenerator());
-        addSQLTokenGenerator(result, new ProjectionsTokenGenerator());
-        addSQLTokenGenerator(result, new OrderByTokenGenerator());
-        addSQLTokenGenerator(result, new AggregationDistinctTokenGenerator());
-        addSQLTokenGenerator(result, new IndexTokenGenerator());
-        addSQLTokenGenerator(result, new OffsetTokenGenerator());
-        addSQLTokenGenerator(result, new RowCountTokenGenerator());
-        addSQLTokenGenerator(result, new GeneratedKeyInsertColumnTokenGenerator());
-        addSQLTokenGenerator(result, new GeneratedKeyForUseDefaultInsertColumnsTokenGenerator());
-        addSQLTokenGenerator(result, new GeneratedKeyAssignmentTokenGenerator());
-        addSQLTokenGenerator(result, new ShardingInsertValuesTokenGenerator());
-        addSQLTokenGenerator(result, new GeneratedKeyInsertValuesTokenGenerator());
+        addSQLTokenGenerator(result, new TableTokenGenerator());//表名token处理，用于真实表名替换
+        addSQLTokenGenerator(result, new DistinctProjectionPrefixTokenGenerator());// select distinct关键字处理
+        addSQLTokenGenerator(result, new ProjectionsTokenGenerator());// select列名处理，主要是衍生列avg处理
+        addSQLTokenGenerator(result, new OrderByTokenGenerator());// Order by Token处理
+        addSQLTokenGenerator(result, new AggregationDistinctTokenGenerator());// 聚合函数的distinct关键字处理
+        addSQLTokenGenerator(result, new IndexTokenGenerator());// 索引重命名
+        addSQLTokenGenerator(result, new OffsetTokenGenerator());// offset 重写
+        addSQLTokenGenerator(result, new RowCountTokenGenerator());// rowCount重写
+        addSQLTokenGenerator(result, new GeneratedKeyInsertColumnTokenGenerator());// 分布式主键列添加，在insert sql列最后添加
+        addSQLTokenGenerator(result, new GeneratedKeyForUseDefaultInsertColumnsTokenGenerator());// insert SQL使用默认列名时需要完成补齐真实列名，包括自增列
+        addSQLTokenGenerator(result, new GeneratedKeyAssignmentTokenGenerator());// SET自增键生成
+        addSQLTokenGenerator(result, new ShardingInsertValuesTokenGenerator());// insert SQL 的values Token解析，为后续添加自增值做准备
+        addSQLTokenGenerator(result, new GeneratedKeyInsertValuesTokenGenerator());//为insert values添加自增列值
         return result;
     }
     

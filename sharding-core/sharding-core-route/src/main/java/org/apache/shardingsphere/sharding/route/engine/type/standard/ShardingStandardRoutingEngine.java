@@ -77,7 +77,8 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
     private boolean isDMLForModify(final SQLStatementContext sqlStatementContext) {
         return sqlStatementContext instanceof InsertStatementContext || sqlStatementContext instanceof UpdateStatementContext || sqlStatementContext instanceof DeleteStatementContext;
     }
-    
+
+    // 根据数据节点生成路由结果
     private RouteResult generateRouteResult(final Collection<DataNode> routedDataNodes) {
         RouteResult result = new RouteResult();
         result.getOriginalDataNodes().addAll(originalDataNodes);
@@ -87,11 +88,15 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
         }
         return result;
     }
-    
+
+    // 计算数据节点，计算路由的核心方法
     private Collection<DataNode> getDataNodes(final ShardingRule shardingRule, final TableRule tableRule) {
+        //hint强制路由
         if (isRoutingByHint(shardingRule, tableRule)) {
             return routeByHint(shardingRule, tableRule);
         }
+
+        //根据分片条件进行分片
         if (isRoutingByShardingConditions(shardingRule, tableRule)) {
             return routeByShardingConditions(shardingRule, tableRule);
         }
@@ -189,9 +194,11 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
     }
     
     private Collection<DataNode> route0(final ShardingRule shardingRule, final TableRule tableRule, final List<RouteValue> databaseShardingValues, final List<RouteValue> tableShardingValues) {
+        // 执行配置的库路由计算方法，得到路由到数据库标识
         Collection<String> routedDataSources = routeDataSources(shardingRule, tableRule, databaseShardingValues);
         Collection<DataNode> result = new LinkedList<>();
         for (String each : routedDataSources) {
+            //执行配置的表路由计算方法，得到实际表名
             result.addAll(routeTables(shardingRule, tableRule, each, tableShardingValues));
         }
         return result;
@@ -201,6 +208,14 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
         if (databaseShardingValues.isEmpty()) {
             return tableRule.getActualDatasourceNames();
         }
+        /**
+         * 执行分片策略：
+         *  inline
+         *  standard
+         *  complex
+         *  hint
+         *  无分片键
+         */
         Collection<String> result = new LinkedHashSet<>(shardingRule.getDatabaseShardingStrategy(tableRule).doSharding(tableRule.getActualDatasourceNames(), databaseShardingValues, this.properties));
         Preconditions.checkState(!result.isEmpty(), "no database route info");
         Preconditions.checkState(tableRule.getActualDatasourceNames().containsAll(result), 
@@ -210,6 +225,7 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
     
     private Collection<DataNode> routeTables(final ShardingRule shardingRule, final TableRule tableRule, final String routedDataSource, final List<RouteValue> tableShardingValues) {
         Collection<String> availableTargetTables = tableRule.getActualTableNames(routedDataSource);
+        //执行分片策略
         Collection<String> routedTables = new LinkedHashSet<>(tableShardingValues.isEmpty() ? availableTargetTables
                 : shardingRule.getTableShardingStrategy(tableRule).doSharding(availableTargetTables, tableShardingValues, this.properties));
         Preconditions.checkState(!routedTables.isEmpty(), "no table route info");

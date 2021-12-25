@@ -71,9 +71,12 @@ public final class DataNodeRouter {
      * @return route context
      */
     public RouteContext route(final String sql, final List<Object> parameters, final boolean useCache) {
+        //钩子函数回调
         routingHook.start(sql);
         try {
+            //生成路由上下文RouteContext
             RouteContext result = executeRoute(sql, parameters, useCache);
+            //钩子函数回调
             routingHook.finishSuccess(result, metaData.getSchema());
             return result;
             // CHECKSTYLE:OFF
@@ -86,7 +89,15 @@ public final class DataNodeRouter {
     
     @SuppressWarnings("unchecked")
     private RouteContext executeRoute(final String sql, final List<Object> parameters, final boolean useCache) {
+        // 调用解析引擎完成了SQL的解析，创建了一个初始的RouteContext实例；
         RouteContext result = createRouteContext(sql, parameters, useCache);
+
+        /**
+         *  调用路由修饰器类对解析结果进行路由。可能是分库分表，也可能是读写分离
+         *  RouteDecorator:
+         *      - MasterSlaveRouteDecorator
+         *      - ShardingRouteDecorator
+         */
         for (Entry<BaseRule, RouteDecorator> entry : decorators.entrySet()) {
             result = entry.getValue().decorate(result, metaData, entry.getKey(), properties);
         }
@@ -94,8 +105,10 @@ public final class DataNodeRouter {
     }
     
     private RouteContext createRouteContext(final String sql, final List<Object> parameters, final boolean useCache) {
+        //通过SQL解析引擎对SQL进行解析，进而转化成AST，即SQLStatement接口实现类；
         SQLStatement sqlStatement = parserEngine.parse(sql, useCache);
         try {
+            //通过SQLStatementContextFactory方法将SQLStatement实例转化为SQLStatementContext实例。
             SQLStatementContext sqlStatementContext = SQLStatementContextFactory.newInstance(metaData.getSchema(), sql, parameters, sqlStatement);
             return new RouteContext(sqlStatementContext, parameters, new RouteResult());
             // TODO should pass parameters for master-slave

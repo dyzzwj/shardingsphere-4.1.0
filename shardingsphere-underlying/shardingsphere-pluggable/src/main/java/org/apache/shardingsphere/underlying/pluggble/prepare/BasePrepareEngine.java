@@ -80,9 +80,12 @@ public abstract class BasePrepareEngine {
      */
     public ExecutionContext prepare(final String sql, final List<Object> parameters) {
         List<Object> clonedParameters = cloneParameters(parameters);
+        //sql路由
         RouteContext routeContext = executeRoute(sql, clonedParameters);
         ExecutionContext result = new ExecutionContext(routeContext.getSqlStatementContext());
+        //sql改写
         result.getExecutionUnits().addAll(executeRewrite(sql, clonedParameters, routeContext));
+        //打印sql
         if (properties.<Boolean>getValue(ConfigurationPropertyKey.SQL_SHOW)) {
             SQLLogger.logSQL(sql, properties.<Boolean>getValue(ConfigurationPropertyKey.SQL_SIMPLE), result.getSqlStatementContext(), result.getExecutionUnits());
         }
@@ -92,7 +95,10 @@ public abstract class BasePrepareEngine {
     protected abstract List<Object> cloneParameters(List<Object> parameters);
     
     private RouteContext executeRoute(final String sql, final List<Object> clonedParameters) {
+        //注册路由的装饰器（基于SPI的自定义扩展)
         registerRouteDecorator();
+        //路由（计算应该运行在哪个库和操作哪张表）
+        //PreparedQueryPrepareEngine.route
         return route(router, sql, clonedParameters);
     }
     
@@ -117,12 +123,16 @@ public abstract class BasePrepareEngine {
     protected abstract RouteContext route(DataNodeRouter dataNodeRouter, String sql, List<Object> parameters);
     
     private Collection<ExecutionUnit> executeRewrite(final String sql, final List<Object> parameters, final RouteContext routeContext) {
+        //注册改写装饰器
         registerRewriteDecorator();
+        //创建SQLRewriteContext
         SQLRewriteContext sqlRewriteContext = rewriter.createSQLRewriteContext(sql, parameters, routeContext.getSqlStatementContext(), routeContext);
+        //改写
         return routeContext.getRouteResult().getRouteUnits().isEmpty() ? rewrite(sqlRewriteContext) : rewrite(routeContext, sqlRewriteContext);
     }
     
     private void registerRewriteDecorator() {
+        //SQLRewriteContextDecorator：注册该接口的实现类
         for (Class<? extends SQLRewriteContextDecorator> each : OrderedRegistry.getRegisteredClasses(SQLRewriteContextDecorator.class)) {
             SQLRewriteContextDecorator rewriteContextDecorator = createRewriteDecorator(each);
             Class<?> ruleClass = (Class<?>) rewriteContextDecorator.getType();
@@ -141,6 +151,7 @@ public abstract class BasePrepareEngine {
     }
     
     private Collection<ExecutionUnit> rewrite(final SQLRewriteContext sqlRewriteContext) {
+        //改写
         SQLRewriteResult sqlRewriteResult = new SQLRewriteEngine().rewrite(sqlRewriteContext);
         String dataSourceName = metaData.getDataSources().getAllInstanceDataSourceNames().iterator().next();
         return Collections.singletonList(new ExecutionUnit(dataSourceName, new SQLUnit(sqlRewriteResult.getSql(), sqlRewriteResult.getParameters())));
@@ -149,6 +160,7 @@ public abstract class BasePrepareEngine {
     private Collection<ExecutionUnit> rewrite(final RouteContext routeContext, final SQLRewriteContext sqlRewriteContext) {
         Collection<ExecutionUnit> result = new LinkedHashSet<>();
         for (Entry<RouteUnit, SQLRewriteResult> entry : new SQLRouteRewriteEngine().rewrite(sqlRewriteContext, routeContext.getRouteResult()).entrySet()) {
+            //完成SQL的改写后，就可以构建SQLUnit，进而构建出ExecutionUnit
             result.add(new ExecutionUnit(entry.getKey().getDataSourceMapper().getActualName(), new SQLUnit(entry.getValue().getSql(), entry.getValue().getParameters())));
         }
         return result;

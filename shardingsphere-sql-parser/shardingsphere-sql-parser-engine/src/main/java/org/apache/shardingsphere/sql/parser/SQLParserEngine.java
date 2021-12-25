@@ -55,10 +55,13 @@ public final class SQLParserEngine {
      * @return SQL statement
      */
     public SQLStatement parse(final String sql, final boolean useCache) {
+        //钩子函数回调
         ParsingHook parsingHook = new SPIParsingHook();
         parsingHook.start(sql);
         try {
+            //解析
             SQLStatement result = parse0(sql, useCache);
+            //钩子函数回调
             parsingHook.finishSuccess(result);
             return result;
             // CHECKSTYLE:OFF
@@ -70,13 +73,16 @@ public final class SQLParserEngine {
     }
     
     private SQLStatement parse0(final String sql, final boolean useCache) {
+        // 如果缓存中有该SQL的解析结果，则直接复用
         if (useCache) {
             Optional<SQLStatement> cachedSQLStatement = cache.getSQLStatement(sql);
             if (cachedSQLStatement.isPresent()) {
                 return cachedSQLStatement.get();
             }
         }
+        // 解析SQL生成AST，ParseTree是antlr对应的解析树接口
         ParseTree parseTree = new SQLParserExecutor(databaseTypeName, sql).execute().getRootNode();
+        //通过ParseTreeVisitor访问解析树
         SQLStatement result = (SQLStatement) ParseTreeVisitorFactory.newInstance(databaseTypeName, VisitorRule.valueOf(parseTree.getClass())).visit(parseTree);
         if (useCache) {
             cache.put(sql, result);

@@ -29,7 +29,10 @@ import java.util.Optional;
 
 /**
  * Sharding insert statement validator.
+ *  校验INSERT INTO .... ON DUPLICATE KEY UPDATE类型的sql
+ *
  */
+
 public final class ShardingInsertStatementValidator implements ShardingStatementValidator<InsertStatement> {
     
     @Override
