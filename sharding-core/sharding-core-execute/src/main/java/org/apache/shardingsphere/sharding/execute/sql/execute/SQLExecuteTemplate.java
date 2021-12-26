@@ -35,7 +35,8 @@ import java.util.List;
 public final class SQLExecuteTemplate {
     
     private final ExecutorEngine executorEngine;
-    
+
+    //串行执行 or 并行执行
     private final boolean serial;
     
     /**
@@ -65,6 +66,7 @@ public final class SQLExecuteTemplate {
     public <T> List<T> execute(final Collection<InputGroup<? extends StatementExecuteUnit>> inputGroups,
                                final SQLExecuteCallback<T> firstCallback, final SQLExecuteCallback<T> callback) throws SQLException {
         try {
+            //调用执行引擎
             return executorEngine.execute((Collection) inputGroups, firstCallback, callback, serial);
         } catch (final SQLException ex) {
             ExecutorExceptionHandler.handleException(ex);

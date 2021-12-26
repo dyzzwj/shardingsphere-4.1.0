@@ -121,8 +121,11 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
              * prepare引擎的执行(包括sql解析、sql路由、sql改写)和自增key的生成添加
              */
             prepare();
+            //初始化preparedStatementExecutor
             initPreparedStatementExecutor();
+            //归并
             MergedResult mergedResult = mergeQuery(preparedStatementExecutor.executeQuery());
+            //封装为ShardingResultSet ShardingResultSet实现了jdbc的ResultSet接口
             result = new ShardingResultSet(preparedStatementExecutor.getResultSets(), mergedResult, this, executionContext);
         } finally {
             clearBatch();
@@ -198,6 +201,7 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
     private MergedResult mergeQuery(final List<QueryResult> queryResults) throws SQLException {
         ShardingRuntimeContext runtimeContext = connection.getRuntimeContext();
         MergeEngine mergeEngine = new MergeEngine(runtimeContext.getRule().toRules(), runtimeContext.getProperties(), runtimeContext.getDatabaseType(), runtimeContext.getMetaData().getSchema());
+        //合并引擎进行合并
         return mergeEngine.merge(queryResults, executionContext.getSqlStatementContext());
     }
     

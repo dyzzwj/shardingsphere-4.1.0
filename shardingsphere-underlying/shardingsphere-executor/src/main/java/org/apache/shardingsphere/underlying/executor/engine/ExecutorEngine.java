@@ -73,23 +73,30 @@ public final class ExecutorEngine implements AutoCloseable {
         if (inputGroups.isEmpty()) {
             return Collections.emptyList();
         }
+        //串行执行 or 并行执行
         return serial ? serialExecute(inputGroups, firstCallback, callback) : parallelExecute(inputGroups, firstCallback, callback);
     }
-    
+
+    //串行执行
     private <I, O> List<O> serialExecute(final Collection<InputGroup<I>> inputGroups, final GroupedCallback<I, O> firstCallback, final GroupedCallback<I, O> callback) throws SQLException {
         Iterator<InputGroup<I>> inputGroupsIterator = inputGroups.iterator();
         InputGroup<I> firstInputs = inputGroupsIterator.next();
         List<O> result = new LinkedList<>(syncExecute(firstInputs, null == firstCallback ? callback : firstCallback));
         for (InputGroup<I> each : Lists.newArrayList(inputGroupsIterator)) {
+            //同步就在当前线程中执行callback逻辑
             result.addAll(syncExecute(each, callback));
         }
         return result;
     }
-    
+
+    // 并行执行，可以支持两个回调函数，第一个回调函数执行第一条记录(firstInputs)，第二个回调函数执行其他记录(inputGroupsIterator)
     private <I, O> List<O> parallelExecute(final Collection<InputGroup<I>> inputGroups, final GroupedCallback<I, O> firstCallback, final GroupedCallback<I, O> callback) throws SQLException {
         Iterator<InputGroup<I>> inputGroupsIterator = inputGroups.iterator();
+        //拿到第一条sql inputGroupsIterator中只包含除第一条sql之外的其他sql
         InputGroup<I> firstInputs = inputGroupsIterator.next();
+        // 异步就在线程池中执行
         Collection<ListenableFuture<Collection<O>>> restResultFutures = asyncExecute(Lists.newArrayList(inputGroupsIterator), callback);
+        //同步就在当前线程中执行callback逻辑
         return getGroupResults(syncExecute(firstInputs, null == firstCallback ? callback : firstCallback), restResultFutures);
     }
     
@@ -100,6 +107,7 @@ public final class ExecutorEngine implements AutoCloseable {
     private <I, O> Collection<ListenableFuture<Collection<O>>> asyncExecute(final List<InputGroup<I>> inputGroups, final GroupedCallback<I, O> callback) {
         Collection<ListenableFuture<Collection<O>>> result = new LinkedList<>();
         for (InputGroup<I> each : inputGroups) {
+            //异步执行
             result.add(asyncExecute(each, callback));
         }
         return result;
@@ -107,6 +115,8 @@ public final class ExecutorEngine implements AutoCloseable {
     
     private <I, O> ListenableFuture<Collection<O>> asyncExecute(final InputGroup<I> inputGroup, final GroupedCallback<I, O> callback) {
         final Map<String, Object> dataMap = ExecutorDataMap.getValue();
+        //线程池执行
+        //SQLExecuteCallback.execute:PreparedStatementExecutor类中executeQuery()定义callback
         return executorService.getExecutorService().submit(() -> callback.execute(inputGroup.getInputs(), false, dataMap));
     }
     
@@ -114,6 +124,7 @@ public final class ExecutorEngine implements AutoCloseable {
         List<O> result = new LinkedList<>(firstResults);
         for (ListenableFuture<Collection<O>> each : restFutures) {
             try {
+                //等待
                 result.addAll(each.get());
             } catch (final InterruptedException | ExecutionException ex) {
                 return throwException(ex);

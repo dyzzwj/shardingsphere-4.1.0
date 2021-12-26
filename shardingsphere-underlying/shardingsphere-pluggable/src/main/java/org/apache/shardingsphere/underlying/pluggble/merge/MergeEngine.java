@@ -57,6 +57,7 @@ public final class MergeEngine {
      * @throws SQLException SQL exception
      */
     public MergedResult merge(final List<QueryResult> queryResults, final SQLStatementContext sqlStatementContext) throws SQLException {
+        //注册归并装饰器
         registerMergeDecorator();
         return merger.process(queryResults, sqlStatementContext);
     }

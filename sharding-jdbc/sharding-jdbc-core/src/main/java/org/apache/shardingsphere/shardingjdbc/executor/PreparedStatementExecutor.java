@@ -61,18 +61,23 @@ public final class PreparedStatementExecutor extends AbstractStatementExecutor {
      */
     public void init(final ExecutionContext executionContext) throws SQLException {
         setSqlStatementContext(executionContext.getSqlStatementContext());
+        /**
+         *  对执行单元进行分组
+         */
         getInputGroups().addAll(obtainExecuteGroups(executionContext.getExecutionUnits()));
         cacheStatements();
     }
     
     private Collection<InputGroup<StatementExecuteUnit>> obtainExecuteGroups(final Collection<ExecutionUnit> executionUnits) throws SQLException {
+        //SQLExecutePrepareTemplate. getExecuteUnitGroups方法
         return getSqlExecutePrepareTemplate().getExecuteUnitGroups(executionUnits, new SQLExecutePrepareCallback() {
-            
+
+            // 在指定数据源上创建要求数量的数据库连接
             @Override
             public List<Connection> getConnections(final ConnectionMode connectionMode, final String dataSourceName, final int connectionSize) throws SQLException {
                 return PreparedStatementExecutor.super.getConnection().getConnections(connectionMode, dataSourceName, connectionSize);
             }
-            
+            //根据执行单元信息 创建Statement执行单元对象
             @Override
             public StatementExecuteUnit createStatementExecuteUnit(final Connection connection, final ExecutionUnit executionUnit, final ConnectionMode connectionMode) throws SQLException {
                 return new StatementExecuteUnit(executionUnit, createPreparedStatement(connection, executionUnit.getSqlUnit().getSql()), connectionMode);
@@ -95,12 +100,14 @@ public final class PreparedStatementExecutor extends AbstractStatementExecutor {
     public List<QueryResult> executeQuery() throws SQLException {
         final boolean isExceptionThrown = ExecutorExceptionHandler.isExceptionThrown();
         SQLExecuteCallback<QueryResult> executeCallback = new SQLExecuteCallback<QueryResult>(getDatabaseType(), isExceptionThrown) {
-            
+            // 在指定的Statement上执行SQL，将JDBC结果集包装成查询QueryResult对象（基于流模式、基于内存模式两类）
             @Override
             protected QueryResult executeSQL(final String sql, final Statement statement, final ConnectionMode connectionMode) throws SQLException {
+                // 执行SQL，然后将结果集转成QueryResult对象
                 return getQueryResult(statement, connectionMode);
             }
         };
+        //执行回调
         return executeCallback(executeCallback);
     }
     

@@ -60,7 +60,9 @@ public final class ShardingDQLResultMerger implements ResultMerger {
         Map<String, Integer> columnLabelIndexMap = getColumnLabelIndexMap(queryResults.get(0));
         SelectStatementContext selectStatementContext = (SelectStatementContext) sqlStatementContext;
         selectStatementContext.setIndexes(columnLabelIndexMap);
+        //判断SQL中是否包含group by、distinct row和order by，然后构建GroupByStreamMergedResult或者GroupByMemoryMergedResult、
         MergedResult mergedResult = build(queryResults, selectStatementContext, columnLabelIndexMap, schemaMetaData);
+        //处理分页
         return decorate(queryResults, selectStatementContext, mergedResult);
     }
     
@@ -74,6 +76,9 @@ public final class ShardingDQLResultMerger implements ResultMerger {
     
     private MergedResult build(final List<QueryResult> queryResults, final SelectStatementContext selectStatementContext,
                                final Map<String, Integer> columnLabelIndexMap, final SchemaMetaData schemaMetaData) throws SQLException {
+        /**
+         * 在merge方法中会根据判断SQL中是否包含group by、distinct row和order by，然后构建GroupByStreamMergedResult或者GroupByMemoryMergedResult、OrderByStreamMergedResult
+         */
         if (isNeedProcessGroupBy(selectStatementContext)) {
             return getGroupByMergedResult(queryResults, selectStatementContext, columnLabelIndexMap, schemaMetaData);
         }

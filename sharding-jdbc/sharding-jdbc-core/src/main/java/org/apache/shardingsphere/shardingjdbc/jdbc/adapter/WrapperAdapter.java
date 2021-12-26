@@ -27,9 +27,14 @@ import java.util.Collection;
 
 /**
  * Adapter for {@code java.sql.Wrapper}.
+ *
+ * JDBC Wrapper适配类.
  */
 public abstract class WrapperAdapter implements Wrapper {
-    
+
+    /**
+     * 记录的方法数组
+     */
     private final Collection<JdbcMethodInvocation> jdbcMethodInvocations = new ArrayList<>();
     
     @SuppressWarnings("unchecked")
@@ -47,7 +52,7 @@ public abstract class WrapperAdapter implements Wrapper {
     }
     
     /**
-     * record method invocation.
+     * 记录方法调用.
      * 
      * @param targetClass target class
      * @param methodName method name
@@ -60,7 +65,7 @@ public abstract class WrapperAdapter implements Wrapper {
     }
     
     /**
-     * Replay methods invocation.
+     * 回放记录的方法调用.
      * 
      * @param target target object
      */

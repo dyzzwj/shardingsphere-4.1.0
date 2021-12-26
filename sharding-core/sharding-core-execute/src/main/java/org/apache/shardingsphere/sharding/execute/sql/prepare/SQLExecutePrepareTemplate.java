@@ -56,9 +56,12 @@ public final class SQLExecutePrepareTemplate {
     
     private Collection<InputGroup<StatementExecuteUnit>> getSynchronizedExecuteUnitGroups(
             final Collection<ExecutionUnit> executionUnits, final SQLExecutePrepareCallback callback) throws SQLException {
+
+        //先按照数据库进行分组,生成数据源与其SQLUnit的对应映射
         Map<String, List<SQLUnit>> sqlUnitGroups = getSQLUnitGroups(executionUnits);
         Collection<InputGroup<StatementExecuteUnit>> result = new LinkedList<>();
         for (Entry<String, List<SQLUnit>> entry : sqlUnitGroups.entrySet()) {
+            //  生成SQL执行分组，将SQLUnit转化为InputGroup<StatementExecuteUnit>，对应关系为1:1
             result.addAll(getSQLExecuteGroups(entry.getKey(), entry.getValue(), callback));
         }
         return result;
@@ -66,7 +69,9 @@ public final class SQLExecutePrepareTemplate {
     
     private Map<String, List<SQLUnit>> getSQLUnitGroups(final Collection<ExecutionUnit> executionUnits) {
         Map<String, List<SQLUnit>> result = new LinkedHashMap<>(executionUnits.size(), 1);
+
         for (ExecutionUnit each : executionUnits) {
+
             if (!result.containsKey(each.getDataSourceName())) {
                 result.put(each.getDataSourceName(), new LinkedList<>());
             }
@@ -80,10 +85,12 @@ public final class SQLExecutePrepareTemplate {
         List<InputGroup<StatementExecuteUnit>> result = new LinkedList<>();
         int desiredPartitionSize = Math.max(0 == sqlUnits.size() % maxConnectionsSizePerQuery ? sqlUnits.size() / maxConnectionsSizePerQuery : sqlUnits.size() / maxConnectionsSizePerQuery + 1, 1);
         List<List<SQLUnit>> sqlUnitPartitions = Lists.partition(sqlUnits, desiredPartitionSize);
+        //根据SQL单元的数量与maxConnectionsSizePerQuery计算得出采用连接限制类型还是内存限制类型
         ConnectionMode connectionMode = maxConnectionsSizePerQuery < sqlUnits.size() ? ConnectionMode.CONNECTION_STRICTLY : ConnectionMode.MEMORY_STRICTLY;
         List<Connection> connections = callback.getConnections(connectionMode, dataSourceName, sqlUnitPartitions.size());
         int count = 0;
         for (List<SQLUnit> each : sqlUnitPartitions) {
+            // 根据要执行的SQLUnit，生成对应StatementExecuteUnit对象，添加到返回结果集中
             result.add(getSQLExecuteGroup(connectionMode, connections.get(count++), dataSourceName, each, callback));
         }
         return result;

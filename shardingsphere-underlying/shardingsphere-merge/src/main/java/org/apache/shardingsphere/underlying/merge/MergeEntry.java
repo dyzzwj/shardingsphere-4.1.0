@@ -72,6 +72,7 @@ public final class MergeEntry {
      * @throws SQLException SQL exception
      */
     public MergedResult process(final List<QueryResult> queryResults, final SQLStatementContext sqlStatementContext) throws SQLException {
+        //合并
         Optional<MergedResult> mergedResult = merge(queryResults, sqlStatementContext);
         Optional<MergedResult> result = mergedResult.isPresent() ? Optional.of(decorate(mergedResult.get(), sqlStatementContext)) : decorate(queryResults.get(0), sqlStatementContext);
         return result.orElseGet(() -> new TransparentMergedResult(queryResults.get(0)));
@@ -81,6 +82,7 @@ public final class MergeEntry {
     private Optional<MergedResult> merge(final List<QueryResult> queryResults, final SQLStatementContext sqlStatementContext) throws SQLException {
         for (Entry<BaseRule, ResultProcessEngine> entry : engines.entrySet()) {
             if (entry.getValue() instanceof ResultMergerEngine) {
+                //根据当前SQL的类型创建对应的ResultMerger实例
                 ResultMerger resultMerger = ((ResultMergerEngine) entry.getValue()).newInstance(databaseType, entry.getKey(), properties, sqlStatementContext);
                 return Optional.of(resultMerger.merge(queryResults, sqlStatementContext, schemaMetaData));
             }

@@ -126,6 +126,7 @@ public abstract class AbstractStatementExecutor {
      */
     @SuppressWarnings("unchecked")
     protected final <T> List<T> executeCallback(final SQLExecuteCallback<T> executeCallback) throws SQLException {
+        //调用执行器
         List<T> result = sqlExecuteTemplate.execute((Collection) inputGroups, executeCallback);
         refreshMetaDataIfNeeded(connection.getRuntimeContext(), sqlStatementContext);
         return result;
