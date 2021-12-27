@@ -104,18 +104,23 @@ public final class ShardingRouteEngineFactory {
     }
     
     private static ShardingRouteEngine getDALRoutingEngine(final ShardingRule shardingRule, final SQLStatement sqlStatement, final Collection<String> tableNames) {
+        // Use SQL忽略类路由
         if (sqlStatement instanceof UseStatement) {
             return new ShardingIgnoreRoutingEngine();
         }
+        // Set、reset、show database 库广播类路由
         if (sqlStatement instanceof SetStatement || sqlStatement instanceof ResetParameterStatement || sqlStatement instanceof ShowDatabasesStatement) {
             return new ShardingDatabaseBroadcastRoutingEngine();
         }
+        // 如果表名在sharding规则中未配置的使用默认库路由
         if (!tableNames.isEmpty() && !shardingRule.tableRuleExists(tableNames) && shardingRule.hasDefaultDataSourceName()) {
             return new ShardingDefaultDatabaseRoutingEngine(tableNames);
         }
         if (!tableNames.isEmpty()) {
+            //如果表名不为空，采用单一路由
             return new ShardingUnicastRoutingEngine(tableNames);
         }
+        // 采用数据库群组路由
         return new ShardingDataSourceGroupBroadcastRoutingEngine();
     }
     
@@ -135,6 +140,7 @@ public final class ShardingRouteEngineFactory {
     private static ShardingRouteEngine getShardingRoutingEngine(final ShardingRule shardingRule, final SQLStatementContext sqlStatementContext,
                                                                 final ShardingConditions shardingConditions, final Collection<String> tableNames, final ConfigurationProperties properties) {
         Collection<String> shardingTableNames = shardingRule.getShardingLogicTableNames(tableNames);
+        // 只有一张逻辑表或者都是绑定表，采用标准路由
         if (1 == shardingTableNames.size() || shardingRule.isAllBindingTables(shardingTableNames)) {
             return new ShardingStandardRoutingEngine(shardingTableNames.iterator().next(), sqlStatementContext, shardingConditions, properties);
         }
