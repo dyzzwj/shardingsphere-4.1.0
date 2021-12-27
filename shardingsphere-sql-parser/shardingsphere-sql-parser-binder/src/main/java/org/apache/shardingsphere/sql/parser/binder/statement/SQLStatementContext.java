@@ -21,8 +21,10 @@ import org.apache.shardingsphere.sql.parser.binder.segment.table.TablesContext;
 import org.apache.shardingsphere.sql.parser.sql.statement.SQLStatement;
 
 /**
- * SQL statement context.
- * 
+ * SQLStatementContext类相当于SQLStatement的二次处理类，它也是后续路由、改写等环节间传递的上下文对象，
+ * 每种Context往往对应一个ContextEngine，与SQLStatement不同的是，这些Context对象已经包含了部分语义分析处理的逻辑，
+ * 例如会根据需要生成衍生projection列，avg聚合函数会添加count、sum列，分页上下文时会添加生成修改后的offset和rowcount等
+ *
  * @param <T> type of SQL statement
  */
 public interface SQLStatementContext<T extends SQLStatement> {

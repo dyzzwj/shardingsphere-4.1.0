@@ -117,6 +117,7 @@ import java.util.List;
 
 /**
  * MySQL visitor.
+ * MySQLVisitor类则负责将DML、DDL、DAL等通用的一些解析操作，例如各类型的值、表名、列名等。
  */
 @Getter(AccessLevel.PROTECTED)
 public abstract class MySQLVisitor extends MySQLStatementBaseVisitor<ASTNode> {
@@ -208,7 +209,9 @@ public abstract class MySQLVisitor extends MySQLStatementBaseVisitor<ASTNode> {
     public final ASTNode visitSchemaName(final SchemaNameContext ctx) {
         return visit(ctx.identifier());
     }
-    
+
+
+    // 通过访问TableNameContext构建TableSegment
     @Override
     public final ASTNode visitTableName(final TableNameContext ctx) {
         SimpleTableSegment result = new SimpleTableSegment(new TableNameSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), (IdentifierValue) visit(ctx.name())));
@@ -218,7 +221,8 @@ public abstract class MySQLVisitor extends MySQLStatementBaseVisitor<ASTNode> {
         }
         return result;
     }
-    
+
+    // 通过访问ColumnNameContext构建ColumnSegment
     @Override
     public final ASTNode visitColumnName(final ColumnNameContext ctx) {
         ColumnSegment result = new ColumnSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), (IdentifierValue) visit(ctx.name()));

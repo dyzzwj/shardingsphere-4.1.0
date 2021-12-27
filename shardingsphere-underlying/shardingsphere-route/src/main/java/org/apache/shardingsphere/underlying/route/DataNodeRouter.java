@@ -93,10 +93,10 @@ public final class DataNodeRouter {
         RouteContext result = createRouteContext(sql, parameters, useCache);
 
         /**
-         *  调用路由修饰器类对解析结果进行路由。可能是分库分表，也可能是读写分离
+         *  调用路由修饰器类对解析结果进行路由。可能是数据分片，也可能是读写分离
          *  RouteDecorator:
-         *      - MasterSlaveRouteDecorator
-         *      - ShardingRouteDecorator
+         *      - MasterSlaveRouteDecorator：读写分离
+         *      - ShardingRouteDecorator：数据分片
          */
         for (Entry<BaseRule, RouteDecorator> entry : decorators.entrySet()) {
             result = entry.getValue().decorate(result, metaData, entry.getKey(), properties);

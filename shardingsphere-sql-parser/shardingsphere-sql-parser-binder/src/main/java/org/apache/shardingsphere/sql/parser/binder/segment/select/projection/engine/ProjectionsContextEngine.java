@@ -67,6 +67,7 @@ public final class ProjectionsContextEngine {
         ProjectionsSegment projectionsSegment = selectStatement.getProjections();
         Collection<Projection> projections = getProjections(sql, selectStatement.getSimpleTableSegments(), projectionsSegment);
         ProjectionsContext result = new ProjectionsContext(projectionsSegment.getStartIndex(), projectionsSegment.getStopIndex(), projectionsSegment.isDistinctRow(), projections);
+        // 如果group by和order by的列值在原SQL的projection中没有，则需要添加该衍生列
         result.getProjections().addAll(getDerivedGroupByColumns(projections, groupByContext, selectStatement));
         result.getProjections().addAll(getDerivedOrderByColumns(projections, orderByContext, selectStatement));
         return result;

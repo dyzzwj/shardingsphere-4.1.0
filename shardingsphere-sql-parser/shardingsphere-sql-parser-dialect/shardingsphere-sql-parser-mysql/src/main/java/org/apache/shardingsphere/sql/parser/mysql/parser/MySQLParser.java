@@ -31,7 +31,8 @@ public final class MySQLParser extends MySQLStatementParser implements SQLParser
     public MySQLParser(final TokenStream input) {
         super(input);
     }
-    
+
+    // 根据antlr返回的ExecuteContext创建ParseASTNode对象
     @Override
     public ASTNode parse() {
         return new ParseASTNode(execute());

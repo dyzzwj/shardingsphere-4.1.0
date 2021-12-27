@@ -69,21 +69,27 @@ public final class ShardingRouteEngineFactory {
                                                   final ShardingConditions shardingConditions, final ConfigurationProperties properties) {
         SQLStatement sqlStatement = sqlStatementContext.getSqlStatement();
         Collection<String> tableNames = sqlStatementContext.getTablesContext().getTableNames();
+        // 事务控制类SQL(commit、rollback、savepoint、set transaction)，库广播类路由
         if (sqlStatement instanceof TCLStatement) {
             return new ShardingDatabaseBroadcastRoutingEngine();
         }
+        // DDL SQL（create、alter、drop、truncate...），表广播类路由
         if (sqlStatement instanceof DDLStatement) {
             return new ShardingTableBroadcastRoutingEngine(metaData.getSchema(), sqlStatementContext);
         }
+        // DAL SQL (show database、show tables... )，根据SQL类型选择库广播、表路由或者默认库路由
         if (sqlStatement instanceof DALStatement) {
             return getDALRoutingEngine(shardingRule, sqlStatement, tableNames);
         }
+        // DCL 采用表广播路由或者主库路由
         if (sqlStatement instanceof DCLStatement) {
             return getDCLRoutingEngine(sqlStatementContext, metaData);
         }
+        // 如果都是表名都配置默认数据源，则采用默认库路由
         if (shardingRule.isAllInDefaultDataSource(tableNames)) {
             return new ShardingDefaultDatabaseRoutingEngine(tableNames);
         }
+        // 如果都属于配置中的广播表，查询采用单一路由，随机选择配置的数据源
         if (shardingRule.isAllBroadcastTables(tableNames)) {
             return sqlStatement instanceof SelectStatement ? new ShardingUnicastRoutingEngine(tableNames) : new ShardingDatabaseBroadcastRoutingEngine();
         }
@@ -93,6 +99,7 @@ public final class ShardingRouteEngineFactory {
         if (sqlStatementContext.getSqlStatement() instanceof DMLStatement && shardingConditions.isAlwaysFalse() || tableNames.isEmpty() || !shardingRule.tableRuleExists(tableNames)) {
             return new ShardingUnicastRoutingEngine(tableNames);
         }
+        // 其它采用标准路由或者复杂路由
         return getShardingRoutingEngine(shardingRule, sqlStatementContext, shardingConditions, tableNames, properties);
     }
     

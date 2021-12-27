@@ -48,7 +48,9 @@ public final class ParseTreeVisitorFactory {
         }
         throw new UnsupportedOperationException(String.format("Cannot support database type '%s'", databaseTypeName));
     }
-    
+
+
+    //根据SQL的种类，然后调用SQLVisitorFacade方法得到获取到对应的ParseTreeVisitor实例
     @SneakyThrows
     private static ParseTreeVisitor createParseTreeVisitor(final SQLParserConfiguration configuration, final SQLStatementType type) {
         SQLVisitorFacade visitorFacade = configuration.getVisitorFacadeClass().getConstructor().newInstance();

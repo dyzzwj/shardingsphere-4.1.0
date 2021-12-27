@@ -52,6 +52,7 @@ public final class SQLParserExecutor {
     }
     
     private ParseASTNode towPhaseParse() {
+        //根据数据库类型创建对象的SqlParser
         SQLParser sqlParser = SQLParserFactory.newInstance(databaseTypeName, sql);
         try {
             ((Parser) sqlParser).setErrorHandler(new BailErrorStrategy());

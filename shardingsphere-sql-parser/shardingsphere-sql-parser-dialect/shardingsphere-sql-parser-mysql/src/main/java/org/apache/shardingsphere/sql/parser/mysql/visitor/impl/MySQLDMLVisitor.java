@@ -122,6 +122,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ *
+ *  负责访问DML相关的antlr生成的*Context类，然后读取相关信息构建对应的Segment类与SQLStatement类。
  * DML visitor for MySQL.
  */
 public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
@@ -316,34 +318,43 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         // TODO :Unsupported for union SQL.
         return visit(ctx.selectClause(0));
     }
-    
+
+
+    // 遍历访问antlr生成的SelectClauseContext，创建SelectStatement
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitSelectClause(final SelectClauseContext ctx) {
         SelectStatement result = new SelectStatement();
+        // 设置ProjectionsSegment
         result.setProjections((ProjectionsSegment) visit(ctx.projections()));
         if (null != ctx.selectSpecification()) {
             result.getProjections().setDistinctRow(isDistinct(ctx));
         }
         if (null != ctx.fromClause()) {
+            // 设置TableReferenceSegment
             CollectionValue<TableReferenceSegment> tableReferences = (CollectionValue<TableReferenceSegment>) visit(ctx.fromClause());
             for (TableReferenceSegment each : tableReferences.getValue()) {
                 result.getTableReferences().add(each);
             }
         }
         if (null != ctx.whereClause()) {
+            // 设置WhereSegment
             result.setWhere((WhereSegment) visit(ctx.whereClause()));
         }
         if (null != ctx.groupByClause()) {
+            // 设置GroupBySegment
             result.setGroupBy((GroupBySegment) visit(ctx.groupByClause()));
         }
         if (null != ctx.orderByClause()) {
+            // 设置OrderBySegment
             result.setOrderBy((OrderBySegment) visit(ctx.orderByClause()));
         }
         if (null != ctx.limitClause()) {
+            // 设置LimitSegment
             result.setLimit((LimitSegment) visit(ctx.limitClause()));
         }
         if (null != ctx.lockClause()) {
+            // 设置LockSegment
             result.setLock((LockSegment) visit(ctx.lockClause()));
         }
         return result;
@@ -568,7 +579,8 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
     private SimpleTableSegment createTableSegment(final OwnerSegment ownerSegment) {
         return new SimpleTableSegment(ownerSegment.getStartIndex(), ownerSegment.getStopIndex(), ownerSegment.getIdentifier());
     }
-    
+
+    // 访问WhereClauseContext创建WhereSegment
     @Override
     public ASTNode visitWhereClause(final WhereClauseContext ctx) {
         WhereSegment result = new WhereSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex());
@@ -582,7 +594,8 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
+    // 访问GroupByClauseContext创建GroupBySegmen
     @Override
     public ASTNode visitGroupByClause(final GroupByClauseContext ctx) {
         Collection<OrderByItemSegment> items = new LinkedList<>();
@@ -591,7 +604,8 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new GroupBySegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), items);
     }
-    
+
+    // 访问LimitClauseContext创建LimitSegment
     @Override
     public ASTNode visitLimitClause(final LimitClauseContext ctx) {
         if (null == ctx.limitOffset()) {

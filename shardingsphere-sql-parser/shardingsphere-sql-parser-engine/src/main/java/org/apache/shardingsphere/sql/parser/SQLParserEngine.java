@@ -59,7 +59,7 @@ public final class SQLParserEngine {
         ParsingHook parsingHook = new SPIParsingHook();
         parsingHook.start(sql);
         try {
-            //解析
+            //解析sql
             SQLStatement result = parse0(sql, useCache);
             //钩子函数回调
             parsingHook.finishSuccess(result);
@@ -82,7 +82,7 @@ public final class SQLParserEngine {
         }
         // 解析SQL生成AST，ParseTree是antlr对应的解析树接口
         ParseTree parseTree = new SQLParserExecutor(databaseTypeName, sql).execute().getRootNode();
-        //通过ParseTreeVisitor访问解析树
+        //通过ParseTreeVisitor访问解析树 将antlr的ParseTree对象转化为ShardingSphere自定义的SQLStatement对象
         SQLStatement result = (SQLStatement) ParseTreeVisitorFactory.newInstance(databaseTypeName, VisitorRule.valueOf(parseTree.getClass())).visit(parseTree);
         if (useCache) {
             cache.put(sql, result);
