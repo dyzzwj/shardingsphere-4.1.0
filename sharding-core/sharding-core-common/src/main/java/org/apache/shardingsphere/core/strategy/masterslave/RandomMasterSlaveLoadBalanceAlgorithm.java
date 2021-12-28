@@ -41,6 +41,7 @@ public final class RandomMasterSlaveLoadBalanceAlgorithm implements MasterSlaveL
     
     @Override
     public String getDataSource(final String name, final String masterDataSourceName, final List<String> slaveDataSourceNames) {
+        //通过随机数选择其中一个从库
         return slaveDataSourceNames.get(ThreadLocalRandom.current().nextInt(slaveDataSourceNames.size()));
     }
 }

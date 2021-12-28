@@ -28,7 +28,8 @@ public final class DefaultSQLBuilder extends AbstractSQLBuilder {
     public DefaultSQLBuilder(final SQLRewriteContext context) {
         super(context);
     }
-    
+
+    // 返回Token对应的文本字符
     @Override
     protected String getSQLTokenText(final SQLToken sqlToken) {
         return sqlToken.toString();

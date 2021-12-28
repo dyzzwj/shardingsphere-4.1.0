@@ -40,7 +40,7 @@ public abstract class AbstractSQLBuilder implements SQLBuilder {
         if (context.getSqlTokens().isEmpty()) {
             return context.getSql();
         }
-        //// 按照Token的起始位置排序
+        // 按照Token的起始位置排序
         Collections.sort(context.getSqlTokens());
         StringBuilder result = new StringBuilder();
         result.append(context.getSql().substring(0, context.getSqlTokens().get(0).getStartIndex()));

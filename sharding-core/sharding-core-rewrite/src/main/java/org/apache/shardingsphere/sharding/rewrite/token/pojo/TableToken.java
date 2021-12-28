@@ -53,11 +53,13 @@ public final class TableToken extends SQLToken implements Substitutable, RouteUn
         this.sqlStatementContext = sqlStatementContext;
         this.shardingRule = shardingRule;
     }
-    
+
+    //根据RouteUnit对象生成该Token在SQL改写时需要替换成的字符串
     @Override
     public String toString(final RouteUnit routeUnit) {
         String actualTableName = getLogicAndActualTables(routeUnit).get(identifier.getValue().toLowerCase());
         actualTableName = null == actualTableName ? identifier.getValue().toLowerCase() : actualTableName;
+        //替换成真实物理表名
         return Joiner.on("").join(identifier.getQuoteCharacter().getStartDelimiter(), actualTableName, identifier.getQuoteCharacter().getEndDelimiter());
     }
     

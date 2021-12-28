@@ -54,7 +54,7 @@ public final class ShardingRouteDecorator implements RouteDecorator<ShardingRule
 
 
     /**
-     * 分库分表路由
+     * 数据分片
      * @param routeContext route context
      * @param metaData meta data of ShardingSphere
      * @param shardingRule

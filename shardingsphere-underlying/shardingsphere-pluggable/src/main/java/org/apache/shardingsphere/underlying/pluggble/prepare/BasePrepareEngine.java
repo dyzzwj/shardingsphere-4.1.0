@@ -80,7 +80,7 @@ public abstract class BasePrepareEngine {
      */
     public ExecutionContext prepare(final String sql, final List<Object> parameters) {
         List<Object> clonedParameters = cloneParameters(parameters);
-        //sql路由
+        //sql解析和sql路由
         RouteContext routeContext = executeRoute(sql, clonedParameters);
         ExecutionContext result = new ExecutionContext(routeContext.getSqlStatementContext());
         //sql改写
@@ -125,7 +125,7 @@ public abstract class BasePrepareEngine {
     private Collection<ExecutionUnit> executeRewrite(final String sql, final List<Object> parameters, final RouteContext routeContext) {
         //注册改写装饰器
         registerRewriteDecorator();
-        //创建SQLRewriteContext
+        //创建SQL改写上下文，主要是生成对应的Token以及参数
         SQLRewriteContext sqlRewriteContext = rewriter.createSQLRewriteContext(sql, parameters, routeContext.getSqlStatementContext(), routeContext);
         //改写
         return routeContext.getRouteResult().getRouteUnits().isEmpty() ? rewrite(sqlRewriteContext) : rewrite(routeContext, sqlRewriteContext);
@@ -149,9 +149,10 @@ public abstract class BasePrepareEngine {
             throw new ShardingSphereException(String.format("Can not find public default constructor for rewrite decorator `%s`", decorator), ex);
         }
     }
-    
+
+    //此方法负责将SQL改写上下文转化为执行单元ExecutionUnit集合
     private Collection<ExecutionUnit> rewrite(final SQLRewriteContext sqlRewriteContext) {
-        //改写
+        // 将SQL改写上下文转化为SQL改写结果，主要是获取改写后的SQL与参数
         SQLRewriteResult sqlRewriteResult = new SQLRewriteEngine().rewrite(sqlRewriteContext);
         String dataSourceName = metaData.getDataSources().getAllInstanceDataSourceNames().iterator().next();
         return Collections.singletonList(new ExecutionUnit(dataSourceName, new SQLUnit(sqlRewriteResult.getSql(), sqlRewriteResult.getParameters())));

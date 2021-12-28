@@ -68,7 +68,7 @@ public final class SQLRewriteEntry {
         SQLRewriteContext result = new SQLRewriteContext(schemaMetaData, sqlStatementContext, sql, parameters);
         //依次调用注册的SQLRewriteContextDecorator实现类的decorate方法，根据配置指定的功能以及SQL的类型添加相应的SQLToken生成器。
         decorate(decorators, result, routeContext);
-        //生成此SQL对应的Token
+        // 运行各Token生成器，解构出对应的Token，生成此SQL对应的Token
         result.generateSQLTokens();
         //然后返回SQLRewriteContext对象。
         return result;

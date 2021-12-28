@@ -71,6 +71,8 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
         if (isDMLForModify(sqlStatementContext) && 1 != ((TableAvailable) sqlStatementContext).getAllTables().size()) {
             throw new ShardingSphereException("Cannot support Multiple-Table for '%s'.", sqlStatementContext.getSqlStatement());
         }
+        //getTableRule:获取表分片规则
+        //getDataNodes:计算数据节点
         return generateRouteResult(getDataNodes(shardingRule, shardingRule.getTableRule(logicTableName)));
     }
     
@@ -91,15 +93,16 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
 
     // 计算数据节点，计算路由的核心方法
     private Collection<DataNode> getDataNodes(final ShardingRule shardingRule, final TableRule tableRule) {
-        //hint强制路由
+        // 库表路由都是hint方式，通过hint路由
         if (isRoutingByHint(shardingRule, tableRule)) {
             return routeByHint(shardingRule, tableRule);
         }
 
-        //根据分片条件进行分片
+        //{// 库表路由都不是通过hint方式，则通过sharding条件进行路由
         if (isRoutingByShardingConditions(shardingRule, tableRule)) {
             return routeByShardingConditions(shardingRule, tableRule);
         }
+        // 库表路由中既有hint，又有sharding条件，则进行混合路由
         return routeByMixedConditions(shardingRule, tableRule);
     }
     
@@ -168,11 +171,11 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
     private boolean isGettingShardingValuesFromHint(final ShardingStrategy shardingStrategy) {
         return shardingStrategy instanceof HintShardingStrategy;
     }
-    
+    // 获取通过hint设置的库路由值（通过HintManager.addDatabaseShardingValue或setDatabaseShardingValue设置）
     private List<RouteValue> getDatabaseShardingValuesFromHint() {
         return getRouteValues(HintManager.isDatabaseShardingOnly() ? HintManager.getDatabaseShardingValues() : HintManager.getDatabaseShardingValues(logicTableName));
     }
-    
+    // 获取通过hint设置的表路由值（通过HintManager.addTableShardingValue设置）
     private List<RouteValue> getTableShardingValuesFromHint() {
         return getRouteValues(HintManager.getTableShardingValues(logicTableName));
     }
@@ -203,7 +206,7 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
         }
         return result;
     }
-    
+    // 执行配置的库路由计算方法，得到路由到数据库标识
     private Collection<String> routeDataSources(final ShardingRule shardingRule, final TableRule tableRule, final List<RouteValue> databaseShardingValues) {
         if (databaseShardingValues.isEmpty()) {
             return tableRule.getActualDatasourceNames();
@@ -222,7 +225,7 @@ public final class ShardingStandardRoutingEngine implements ShardingRouteEngine 
                 "Some routed data sources do not belong to configured data sources. routed data sources: `%s`, configured data sources: `%s`", result, tableRule.getActualDatasourceNames());
         return result;
     }
-    
+    // 执行配置的表路由计算方法，得到实际表名
     private Collection<DataNode> routeTables(final ShardingRule shardingRule, final TableRule tableRule, final String routedDataSource, final List<RouteValue> tableShardingValues) {
         Collection<String> availableTargetTables = tableRule.getActualTableNames(routedDataSource);
         //执行分片策略

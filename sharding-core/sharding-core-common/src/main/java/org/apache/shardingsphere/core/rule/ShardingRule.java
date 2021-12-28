@@ -157,6 +157,8 @@ public class ShardingRule implements BaseRule {
         if (tableRule.isPresent()) {
             return tableRule.get();
         }
+
+        //是否是广播表
         if (isBroadcastTable(logicTableName)) {
             return new TableRule(shardingDataSourceNames.getDataSourceNames(), logicTableName);
         }

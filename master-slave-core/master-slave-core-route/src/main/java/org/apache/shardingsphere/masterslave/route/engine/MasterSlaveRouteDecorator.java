@@ -39,11 +39,14 @@ public final class MasterSlaveRouteDecorator implements RouteDecorator<MasterSla
     @Override
     public RouteContext decorate(final RouteContext routeContext, final ShardingSphereMetaData metaData, final MasterSlaveRule masterSlaveRule, final ConfigurationProperties properties) {
         if (routeContext.getRouteResult().getRouteUnits().isEmpty()) {
+            // 获取路由的数据源名称
             String dataSourceName = new MasterSlaveDataSourceRouter(masterSlaveRule).route(routeContext.getSqlStatementContext().getSqlStatement());
             RouteResult routeResult = new RouteResult();
             routeResult.getRouteUnits().add(new RouteUnit(new RouteMapper(dataSourceName, dataSourceName), Collections.emptyList()));
             return new RouteContext(routeContext.getSqlStatementContext(), Collections.emptyList(), routeResult);
         }
+        // 分库分表+读写分离模式下，在计算完数据分片库路由（数据源实际是主从规则名称）后，
+        // 还需要根据主从配置，替换为真实的数据源，因此需要先进行删除，再添加真实数据源
         Collection<RouteUnit> toBeRemoved = new LinkedList<>();
         Collection<RouteUnit> toBeAdded = new LinkedList<>();
         for (RouteUnit each : routeContext.getRouteResult().getRouteUnits()) {

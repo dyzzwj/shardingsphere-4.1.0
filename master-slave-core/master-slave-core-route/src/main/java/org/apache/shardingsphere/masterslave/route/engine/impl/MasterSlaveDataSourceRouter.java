@@ -41,9 +41,11 @@ public final class MasterSlaveDataSourceRouter {
      */
     public String route(final SQLStatement sqlStatement) {
         if (isMasterRoute(sqlStatement)) {
+            // 需要路由到主库(SQL中包含锁例如select for update、非select、通过hint指定主库路由)
             MasterVisitedManager.setMasterVisited();
             return masterSlaveRule.getMasterDataSourceName();
         }
+        // 根据负载均衡算法计算要访问的数据源
         return masterSlaveRule.getLoadBalanceAlgorithm().getDataSource(
                 masterSlaveRule.getName(), masterSlaveRule.getMasterDataSourceName(), new ArrayList<>(masterSlaveRule.getSlaveDataSourceNames()));
     }

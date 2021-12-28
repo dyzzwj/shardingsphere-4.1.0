@@ -74,7 +74,7 @@ public final class DataNodeRouter {
         //钩子函数回调
         routingHook.start(sql);
         try {
-            //生成路由上下文RouteContext
+            //进行路由计算，生成路由上下文RouteContext
             RouteContext result = executeRoute(sql, parameters, useCache);
             //钩子函数回调
             routingHook.finishSuccess(result, metaData.getSchema());

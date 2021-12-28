@@ -45,6 +45,7 @@ public final class StandardShardingStrategy implements ShardingStrategy {
     private final RangeShardingAlgorithm rangeShardingAlgorithm;
     
     public StandardShardingStrategy(final StandardShardingStrategyConfiguration standardShardingStrategyConfig) {
+        //应用负责的分片策略配置类（如果采用spring xml或者yaml方式，ShardingSphere会负责自动创建该类，如果基于JAVA API方式，则需要应用自行进行创建此类）
         Preconditions.checkNotNull(standardShardingStrategyConfig.getShardingColumn(), "Sharding column cannot be null.");
         Preconditions.checkNotNull(standardShardingStrategyConfig.getPreciseShardingAlgorithm(), "precise sharding algorithm cannot be null.");
         shardingColumn = standardShardingStrategyConfig.getShardingColumn();

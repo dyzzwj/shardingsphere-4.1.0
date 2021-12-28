@@ -46,7 +46,9 @@ public final class RoundRobinMasterSlaveLoadBalanceAlgorithm implements MasterSl
     public String getDataSource(final String name, final String masterDataSourceName, final List<String> slaveDataSourceNames) {
         AtomicInteger count = COUNTS.containsKey(name) ? COUNTS.get(name) : new AtomicInteger(0);
         COUNTS.putIfAbsent(name, count);
+        // 记录当前规则访问的次数，达到从库数量后从重置为0
         count.compareAndSet(slaveDataSourceNames.size(), 0);
+        // 通过访问次数取模从库数量，这样会依次获取到各从库
         return slaveDataSourceNames.get(Math.abs(count.getAndIncrement()) % slaveDataSourceNames.size());
     }
 }

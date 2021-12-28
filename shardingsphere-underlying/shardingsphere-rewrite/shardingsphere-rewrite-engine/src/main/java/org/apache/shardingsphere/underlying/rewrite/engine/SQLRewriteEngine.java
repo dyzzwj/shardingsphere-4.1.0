@@ -32,6 +32,7 @@ public final class SQLRewriteEngine {
      * @return SQL rewrite result
      */
     public SQLRewriteResult rewrite(final SQLRewriteContext sqlRewriteContext) {
+        // 将SQL改写上下文中Token转化成SQL， 获取改写后参数，然后构造成SQL改写结果返回
         return new SQLRewriteResult(new DefaultSQLBuilder(sqlRewriteContext).toSQL(), sqlRewriteContext.getParameterBuilder().getParameters());
     }
 }
