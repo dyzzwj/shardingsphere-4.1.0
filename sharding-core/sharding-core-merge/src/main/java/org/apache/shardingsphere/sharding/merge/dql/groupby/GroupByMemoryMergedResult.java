@@ -45,13 +45,17 @@ import java.util.Map.Entry;
 
 /**
  * Memory merged result for group by.
+ *
+ * 当group by和order by的列不一样时，则采用基于内存模式归并
  */
 public final class GroupByMemoryMergedResult extends MemoryMergedResult<ShardingRule> {
     
     public GroupByMemoryMergedResult(final List<QueryResult> queryResults, final SelectStatementContext selectStatementContext, final SchemaMetaData schemaMetaData) throws SQLException {
         super(null, schemaMetaData, selectStatementContext, queryResults);
     }
-    
+
+
+    //与基于流模式归并的区别在于需要遍历读取所有结果集中元素，然后根据GroupByValue分组进行聚合运算。
     @Override
     protected List<MemoryQueryResultRow> init(final ShardingRule shardingRule,
                                               final SchemaMetaData schemaMetaData, final SQLStatementContext sqlStatementContext, final List<QueryResult> queryResults) throws SQLException {
@@ -59,14 +63,19 @@ public final class GroupByMemoryMergedResult extends MemoryMergedResult<Sharding
         Map<GroupByValue, MemoryQueryResultRow> dataMap = new HashMap<>(1024);
         Map<GroupByValue, Map<AggregationProjection, AggregationUnit>> aggregationMap = new HashMap<>(1024);
         for (QueryResult each : queryResults) {
+            //遍历所有结果集元素，然后进行聚合运算
             while (each.next()) {
                 GroupByValue groupByValue = new GroupByValue(each, selectStatementContext.getGroupByContext().getItems());
+                //初始化创建GroupByValue对应的AggregationUn
                 initForFirstGroupByValue(selectStatementContext, each, groupByValue, dataMap, aggregationMap);
+                //对各分组进行聚合计算
                 aggregate(selectStatementContext, each, groupByValue, aggregationMap);
             }
         }
+        //将计算的值设置到aggregationMap
         setAggregationValueToMemoryRow(selectStatementContext, dataMap, aggregationMap);
         List<Boolean> valueCaseSensitive = queryResults.isEmpty() ? Collections.emptyList() : getValueCaseSensitive(queryResults.iterator().next(), selectStatementContext, schemaMetaData);
+        //将aggregationMap中值排序后生成List<MemoryQueryResultRow>集合，此及时作为内存合并结果的内部数据类
         return getMemoryResultSetRows(selectStatementContext, dataMap, valueCaseSensitive);
     }
     

@@ -35,6 +35,8 @@ public final class AggregationUnitFactory {
      * @return aggregation unit instance
      */
     public static AggregationUnit create(final AggregationType type, final boolean isDistinct) {
+
+        //主要就是累积计算传入集合元素的和，如果带有distinct的，则其内部通过一个HashSet进行判重，当为avg聚合运算时，传入的值有两个元素，分别为count和sum值。
         switch (type) {
             case MAX:
                 return new ComparableAggregationUnit(false);

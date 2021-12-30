@@ -33,6 +33,11 @@ import java.util.Queue;
 
 /**
  * Stream merged result for order by.
+ *  使用优先队列实现了基于流模式的排序，由于每个数据集已经有序，所以在next()操作时弹出队列头部元素，然后再取该数据集下一个压入队列，当进行读取数据时直接读取队头元素对应值即可。
+ *
+ *  这里需要注意的是该优先队列采用的是小顶堆，但实际排序的时候可能是升序也可能是降序，那这里如何保证在不同排序方向时都能正确返回结果呢。玄机在排序元素OrderByValue类，其实现了Comparable接口，其会根据排序方向保证元素值的正确顺序。
+ *
+ *
  */
 public class OrderByStreamMergedResult extends StreamMergedResult {
     
@@ -50,7 +55,8 @@ public class OrderByStreamMergedResult extends StreamMergedResult {
         orderResultSetsToQueue(queryResults, selectStatementContext, schemaMetaData);
         isFirstNext = true;
     }
-    
+
+    //将每个数据节点的查询结果各取一个放入优先队列中，设置当前查询结果为队列头元素，由于优先队列能保证其中元素的顺序性，因此 每次取出的队头元素即为排序最小的。
     private void orderResultSetsToQueue(final List<QueryResult> queryResults, final SelectStatementContext selectStatementContext, final SchemaMetaData schemaMetaData) throws SQLException {
         for (QueryResult each : queryResults) {
             OrderByValue orderByValue = new OrderByValue(each, orderByItems, selectStatementContext, schemaMetaData);
@@ -70,6 +76,7 @@ public class OrderByStreamMergedResult extends StreamMergedResult {
             isFirstNext = false;
             return true;
         }
+        //获取队列头元素，然后取该元素所在数据组的下一个元素，如果存在则继续压入有限队列
         OrderByValue firstOrderByValue = orderByValuesQueue.poll();
         if (firstOrderByValue.next()) {
             orderByValuesQueue.offer(firstOrderByValue);

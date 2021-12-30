@@ -60,7 +60,7 @@ public final class ShardingDQLResultMerger implements ResultMerger {
         Map<String, Integer> columnLabelIndexMap = getColumnLabelIndexMap(queryResults.get(0));
         SelectStatementContext selectStatementContext = (SelectStatementContext) sqlStatementContext;
         selectStatementContext.setIndexes(columnLabelIndexMap);
-        //判断SQL中是否包含group by、distinct row和order by，然后构建GroupByStreamMergedResult或者GroupByMemoryMergedResult、
+        // 生成合并结果集 判断SQL中是否包含group by、distinct row和order by，然后构建GroupByStreamMergedResult或者GroupByMemoryMergedResult、
         MergedResult mergedResult = build(queryResults, selectStatementContext, columnLabelIndexMap, schemaMetaData);
         //处理分页
         return decorate(queryResults, selectStatementContext, mergedResult);
@@ -110,6 +110,7 @@ public final class ShardingDQLResultMerger implements ResultMerger {
     
     private MergedResult getGroupByMergedResult(final List<QueryResult> queryResults, final SelectStatementContext selectStatementContext,
                                                 final Map<String, Integer> columnLabelIndexMap, final SchemaMetaData schemaMetaData) throws SQLException {
+        //判断group by与order by的列是否一样，如果是则创建GroupByStreamMergedResult实例 ,否则创建GroupByMemoryMergedResult实例，前者为基于流方式，后者为基于内存方式。
         return selectStatementContext.isSameGroupByAndOrderByItems()
                 ? new GroupByStreamMergedResult(columnLabelIndexMap, queryResults, selectStatementContext, schemaMetaData)
                 : new GroupByMemoryMergedResult(queryResults, selectStatementContext, schemaMetaData);

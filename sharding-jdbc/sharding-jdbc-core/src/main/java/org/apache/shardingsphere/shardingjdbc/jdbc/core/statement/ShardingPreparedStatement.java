@@ -123,7 +123,7 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
             prepare();
             //初始化preparedStatementExecutor
             initPreparedStatementExecutor();
-            //归并
+            //执行查询并对结果集归并
             MergedResult mergedResult = mergeQuery(preparedStatementExecutor.executeQuery());
             //封装为ShardingResultSet ShardingResultSet实现了jdbc的ResultSet接口
             result = new ShardingResultSet(preparedStatementExecutor.getResultSets(), mergedResult, this, executionContext);

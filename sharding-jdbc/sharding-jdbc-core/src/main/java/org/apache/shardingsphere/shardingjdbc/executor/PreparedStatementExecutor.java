@@ -110,7 +110,8 @@ public final class PreparedStatementExecutor extends AbstractStatementExecutor {
         //执行回调
         return executeCallback(executeCallback);
     }
-    
+
+    // 执行SQL，然后将结果集转成QueryResult对象
     private QueryResult getQueryResult(final Statement statement, final ConnectionMode connectionMode) throws SQLException {
         PreparedStatement preparedStatement = (PreparedStatement) statement;
         ResultSet resultSet = preparedStatement.executeQuery();

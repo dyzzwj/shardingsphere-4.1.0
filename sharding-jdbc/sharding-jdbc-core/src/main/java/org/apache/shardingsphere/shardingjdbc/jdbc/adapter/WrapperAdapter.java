@@ -53,7 +53,7 @@ public abstract class WrapperAdapter implements Wrapper {
     
     /**
      * 记录方法调用.
-     * 
+     *  负责记录外围应用的一些设置方法的调用，例如setAutoCommit、setReadOnly、setFetchSize、setMaxFieldSize等，在外围程序调用ShardingConnection的setAutoCommit、setReadOnly以及ShardingPreparedStatement的setFetchSize、setMaxFieldSize时进行调用
      * @param targetClass target class
      * @param methodName method name
      * @param argumentTypes argument types
@@ -66,7 +66,7 @@ public abstract class WrapperAdapter implements Wrapper {
     
     /**
      * 回放记录的方法调用.
-     * 
+     * 完成在指定目标对象回放这些方法调用，会在底层真实JDBC类（DB driver、数据库连接池等）时进行重新调用。
      * @param target target object
      */
     public final void replayMethodsInvocation(final Object target) {

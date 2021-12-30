@@ -53,7 +53,9 @@ public final class SQLExecutePrepareTemplate {
     public Collection<InputGroup<StatementExecuteUnit>> getExecuteUnitGroups(final Collection<ExecutionUnit> executionUnits, final SQLExecutePrepareCallback callback) throws SQLException {
         return getSynchronizedExecuteUnitGroups(executionUnits, callback);
     }
-    
+
+
+    //把ExecutionUnit集合转换为StatementExecuteUnit集合
     private Collection<InputGroup<StatementExecuteUnit>> getSynchronizedExecuteUnitGroups(
             final Collection<ExecutionUnit> executionUnits, final SQLExecutePrepareCallback callback) throws SQLException {
 
@@ -66,7 +68,7 @@ public final class SQLExecutePrepareTemplate {
         }
         return result;
     }
-    
+    // 根据执行单元ExecutionUnit，生成各数据源对应的SQLUnit集合
     private Map<String, List<SQLUnit>> getSQLUnitGroups(final Collection<ExecutionUnit> executionUnits) {
         Map<String, List<SQLUnit>> result = new LinkedHashMap<>(executionUnits.size(), 1);
 
@@ -79,13 +81,16 @@ public final class SQLExecutePrepareTemplate {
         }
         return result;
     }
-    
+    // 生成SQL执行分组
     private List<InputGroup<StatementExecuteUnit>> getSQLExecuteGroups(final String dataSourceName,
                                                                        final List<SQLUnit> sqlUnits, final SQLExecutePrepareCallback callback) throws SQLException {
         List<InputGroup<StatementExecuteUnit>> result = new LinkedList<>();
+        //maxConnectionsSizePerQuery：每个SQL最多可以配置多少数据库连接供使用
+        // 计算出当前SQL需要多少个数据库连接
         int desiredPartitionSize = Math.max(0 == sqlUnits.size() % maxConnectionsSizePerQuery ? sqlUnits.size() / maxConnectionsSizePerQuery : sqlUnits.size() / maxConnectionsSizePerQuery + 1, 1);
         List<List<SQLUnit>> sqlUnitPartitions = Lists.partition(sqlUnits, desiredPartitionSize);
         //根据SQL单元的数量与maxConnectionsSizePerQuery计算得出采用连接限制类型还是内存限制类型
+
         ConnectionMode connectionMode = maxConnectionsSizePerQuery < sqlUnits.size() ? ConnectionMode.CONNECTION_STRICTLY : ConnectionMode.MEMORY_STRICTLY;
         List<Connection> connections = callback.getConnections(connectionMode, dataSourceName, sqlUnitPartitions.size());
         int count = 0;

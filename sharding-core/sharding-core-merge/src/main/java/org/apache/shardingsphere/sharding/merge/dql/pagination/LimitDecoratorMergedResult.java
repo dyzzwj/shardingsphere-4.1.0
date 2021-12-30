@@ -42,6 +42,7 @@ public final class LimitDecoratorMergedResult extends DecoratorMergedResult {
     
     private boolean skipOffset() throws SQLException {
         for (int i = 0; i < pagination.getActualOffset(); i++) {
+            //如果结果集总概述小于offset值，设置skipAll为true，表示跳过所有结果集，后续next()直接返回false
             if (!getMergedResult().next()) {
                 return true;
             }
@@ -58,6 +59,7 @@ public final class LimitDecoratorMergedResult extends DecoratorMergedResult {
         if (!pagination.getActualRowCount().isPresent()) {
             return getMergedResult().next();
         }
+        //由于改写了offset，多个数据节点返回的结果集总数大于SQL中指定的RowCount，因此在next()操作时要记录当前已返回的记录总数rowNumber，同时要判断该值不能大于SQL指定的RowCount
         return ++rowNumber <= pagination.getActualRowCount().get() && getMergedResult().next();
     }
 }

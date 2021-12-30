@@ -38,6 +38,9 @@ import java.util.Map.Entry;
 
 /**
  * Stream merged result for group by.
+ *
+ *  基于流模式的排序合并结果集。
+ *
  */
 public final class GroupByStreamMergedResult extends OrderByStreamMergedResult {
     
@@ -73,8 +76,10 @@ public final class GroupByStreamMergedResult extends OrderByStreamMergedResult {
     
     private boolean aggregateCurrentGroupByRowAndNext() throws SQLException {
         boolean result = false;
+        //生成各AggregationProjection对应的聚合单元AggregationUnit，在进行聚合计算时会根据该map进行运算。
         Map<AggregationProjection, AggregationUnit> aggregationUnitMap = Maps.toMap(
                 selectStatementContext.getProjectionsContext().getAggregationProjections(), input -> AggregationUnitFactory.create(input.getType(), input instanceof AggregationDistinctProjection));
+        //如果从优先队列中取到的group by值与当前group by值一样，则进行聚合运算
         while (currentGroupByValues.equals(new GroupByValue(getCurrentQueryResult(), selectStatementContext.getGroupByContext().getItems()).getGroupValues())) {
             aggregate(aggregationUnitMap);
             cacheCurrentRow();
@@ -83,16 +88,17 @@ public final class GroupByStreamMergedResult extends OrderByStreamMergedResult {
                 break;
             }
         }
+        //将聚合计算后的结果设置到currentRow中，这样外围在调用getValue()时，就可以拿到聚合运算后的准确结果(在sharding-jdbc中，应用调用ShardingResultSet的getXXX方法，其内部再调用MergeResult的getValue方法)
         setAggregationValueToCurrentRow(aggregationUnitMap);
         return result;
     }
-    
+    //聚合计算
     private void aggregate(final Map<AggregationProjection, AggregationUnit> aggregationUnitMap) throws SQLException {
         for (Entry<AggregationProjection, AggregationUnit> entry : aggregationUnitMap.entrySet()) {
             List<Comparable<?>> values = new ArrayList<>(2);
             if (entry.getKey().getDerivedAggregationProjections().isEmpty()) {
                 values.add(getAggregationValue(entry.getKey()));
-            } else {
+            } else {//当为avg聚合操作时会有DerivedAggregationProjections，主要是rewrite时添加的sum和count
                 for (AggregationProjection each : entry.getKey().getDerivedAggregationProjections()) {
                     values.add(getAggregationValue(each));
                 }
